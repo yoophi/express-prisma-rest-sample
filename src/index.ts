@@ -11,7 +11,15 @@ app.get("/users", async (req, res) => {
   res.json(users);
 });
 
-app.get("/feed", async (req, res) => {
+app.post('/users', async (req, res) => {
+  const result = await prisma.user.create({
+    data: { ...req.body }
+  })
+
+  res.json(result)
+})
+
+app.get("/posts", async (req, res) => {
   const posts = await prisma.post.findMany({
     where: { published: true },
     include: { author: true },
@@ -19,10 +27,24 @@ app.get("/feed", async (req, res) => {
   res.json(posts);
 });
 
-app.get(`/post/:id`, async (req, res) => {
+app.post('/posts', async (req, res) => {
+  const { title, content, authorEmail } = req.body
+  const result = await prisma.post.create({
+    data: {
+      title, content, published: false, 
+      author: {
+        connect: { email: authorEmail }
+      }
+    }
+  })
+  res.json(result)
+})
+
+app.get('/posts/:id', async (req, res) => {
   const { id } = req.params;
   const post = await prisma.post.findFirst({
     where: { id: Number(id) },
+    include: { author: true },
   });
   res.json(post);
 });
